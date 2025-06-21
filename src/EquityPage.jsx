@@ -20,7 +20,7 @@ const EquityPage = () => {
         from.setDate(from.getDate() - daysAgo);
         from.setHours(0, 0, 0, 0);
 
-        const url = `http://localhost:3000/api/spikes?segment=Equity&volume=100000&from=${from.toISOString()}&page=${page}&limit=${limit}`;
+        const url = `https://stock-scanner-be-r8iz.onrender.com/api/spikes?segment=Equity&volume=100000&from=${from.toISOString()}&page=${page}&limit=${limit}`;
 
         try {
             const res = await fetch(url);
