@@ -19,7 +19,7 @@ const App = () => {
       <header className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
         {/* Nav */}
         <nav className="flex space-x-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-2 rounded-xl shadow-md">
-          <NavLink
+          {/* <NavLink
             to="/options"
             className={({ isActive }) =>
               `px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${isActive
@@ -29,7 +29,7 @@ const App = () => {
             }
           >
             Options
-          </NavLink>
+          </NavLink> */}
           <NavLink
             to="/equity"
             className={({ isActive }) =>
@@ -63,8 +63,8 @@ const App = () => {
 
       {/* Routes */}
       <Routes>
-        <Route path="/" element={<Navigate to="/options" replace />} />
-        <Route path="/options" element={<OptionsPage />} />
+        <Route path="/" element={<Navigate to="/equity" replace />} />
+        {/* <Route path="/options" element={<OptionsPage />} /> */}
         <Route path="/equity" element={<EquityPage />} />
       </Routes>
 

@@ -4,13 +4,14 @@ import Table from './SharedTable';
 
 const EquityPage = () => {
     const [spikes, setSpikes] = useState([]);
-    const [loading, setLoading] = useState(true); // only for initial load
+    const [loading, setLoading] = useState(true);
     const [lastUpdated, setLastUpdated] = useState(null);
     const [search, setSearch] = useState('');
     const [dateOption, setDateOption] = useState('today');
+    const [volumeThreshold, setVolumeThreshold] = useState(100000); // NEW
     const [page, setPage] = useState(1);
     const [total, setTotal] = useState(0);
-    const limit = 20;
+    const limit = 100;
 
     const fetchEquitySpikes = async (showLoader = false) => {
         if (showLoader) setLoading(true);
@@ -20,7 +21,7 @@ const EquityPage = () => {
         from.setDate(from.getDate() - daysAgo);
         from.setHours(0, 0, 0, 0);
 
-        const url = `https://stock-scanner-be-r8iz.onrender.com/api/spikes?segment=Equity&volume=100000&from=${from.toISOString()}&page=${page}&limit=${limit}`;
+        const url = `https://stock-scanner-be-r8iz.onrender.com/api/spikes?segment=Equity&volume=${volumeThreshold}&from=${from.toISOString()}&page=${page}&limit=${limit}`;
 
         try {
             const res = await fetch(url);
@@ -35,21 +36,18 @@ const EquityPage = () => {
         }
     };
 
-    // Initial load + on filters/page change
     useEffect(() => {
-        fetchEquitySpikes(true); // show loader
-    }, [dateOption, page]);
+        fetchEquitySpikes(true);
+    }, [volumeThreshold, dateOption, page]);
 
-    // Set page to 1 on date or search change
     useEffect(() => {
         setPage(1);
-    }, [search, dateOption]);
+    }, [search, dateOption, volumeThreshold]);
 
-    // Polling without showing loader
     useEffect(() => {
         const interval = setInterval(() => fetchEquitySpikes(false), 10000);
         return () => clearInterval(interval);
-    }, [dateOption, page]);
+    }, [volumeThreshold, dateOption, page]);
 
     const filtered = spikes.filter((s) =>
         s.symbol.toLowerCase().includes(search.toLowerCase())
@@ -57,16 +55,31 @@ const EquityPage = () => {
 
     return (
         <section className="max-w-6xl mx-auto">
-            <div className="flex justify-between items-center mb-4">
-                <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">📊 Equity Volume Spikes</h1>
-                <select
-                    value={dateOption}
-                    onChange={(e) => setDateOption(e.target.value)}
-                    className="p-2 rounded dark:bg-gray-800 border dark:border-gray-600"
-                >
-                    <option value="today">Today</option>
-                    <option value="yesterday">Yesterday</option>
-                </select>
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
+                <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
+                    📊 Equity Volume Spikes
+                </h1>
+                <div className="flex gap-3">
+                    <select
+                        value={volumeThreshold}
+                        onChange={(e) => setVolumeThreshold(Number(e.target.value))}
+                        className="p-2 rounded dark:bg-gray-800 border dark:border-gray-600"
+                    >
+                        {/* <option value={10000}>10K</option>
+                        <option value={25000}>25K</option> */}
+                        <option value={50000}>50K</option>
+                        <option value={100000}>100K</option>
+                        <option value={200000}>200K</option>
+                    </select>
+                    <select
+                        value={dateOption}
+                        onChange={(e) => setDateOption(e.target.value)}
+                        className="p-2 rounded dark:bg-gray-800 border dark:border-gray-600"
+                    >
+                        <option value="today">Today</option>
+                        <option value="yesterday">Yesterday</option>
+                    </select>
+                </div>
             </div>
 
             {lastUpdated && (
