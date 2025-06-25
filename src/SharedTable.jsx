@@ -4,9 +4,11 @@ import { format } from 'date-fns';
 const SharedTable = ({ rows, loading }) => {
     const formatTime = (d) => format(new Date(d), 'HH:mm:ss');
     const getVolumeColor = (delta) => {
-        if (delta > 500000) return 'bg-red-500';
-        if (delta > 300000) return 'bg-orange-500';
-        return 'bg-green-500';
+        if (!delta || isNaN(delta)) return 'bg-gray-300 text-gray-700'; // fallback for invalid or 0
+        if (delta > 500000) return 'bg-red-500 text-white';
+        if (delta > 300000) return 'bg-orange-500 text-white';
+        if (delta > 0) return 'bg-green-500 text-white';
+        return 'bg-gray-300 text-gray-700';
     };
     if (loading) {
         return (
@@ -36,6 +38,9 @@ const SharedTable = ({ rows, loading }) => {
                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                             Time
                         </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                            Trade Value
+                        </th>
                     </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
@@ -47,16 +52,20 @@ const SharedTable = ({ rows, loading }) => {
                             <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300 text-right">
                                 {s.ltp.toFixed(2)}
                             </td>
-                            <td className="px-6 py-4 text-sm text-right">
+                            <td className="px-6 py-4 text-md text-right">
                                 <span className={`
             ${getVolumeColor(s.volumeDelta)}
-            text-white text-xs font-semibold px-2 py-0.5 rounded-full
+            text-white text-xs font-semibold px-5 py-0.5 rounded-full
           `}>
                                     {s.volumeDelta}
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300 text-right">
                                 {formatTime(s.timestamp)}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300 text-right">
+                                {"₹" + " " + Math.round(s.volumeDelta * s.openPriceofCandle).toLocaleString()}
+
                             </td>
                         </tr>
                     ))}
