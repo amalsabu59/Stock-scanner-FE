@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { format } from 'date-fns';
 import Table from './SharedTable';
+import toast, { Toaster } from 'react-hot-toast';
 
 const EquityPage = () => {
     const [spikes, setSpikes] = useState([]);
@@ -8,10 +9,13 @@ const EquityPage = () => {
     const [lastUpdated, setLastUpdated] = useState(null);
     const [search, setSearch] = useState('');
     const [dateOption, setDateOption] = useState('today');
-    const [volumeThreshold, setVolumeThreshold] = useState(100000); // NEW
+    const [volumeThreshold, setVolumeThreshold] = useState(100000);
     const [page, setPage] = useState(1);
     const [total, setTotal] = useState(0);
     const limit = 100;
+
+    const seenSpikesRef = useRef(new Set()); // Stores "symbol:volumeDelta"
+    const skipNextToastRef = useRef(true); // Skip toast on first load & filter changes
 
     const fetchEquitySpikes = async (showLoader = false) => {
         if (showLoader) setLoading(true);
@@ -25,8 +29,44 @@ const EquityPage = () => {
 
         try {
             const res = await fetch(url);
-            const { spikes, total } = await res.json();
-            setSpikes(spikes);
+            const { spikes: newSpikes, total } = await res.json();
+
+            if (skipNextToastRef.current) {
+                // Skip toast but mark all as seen
+                newSpikes.forEach(s => {
+                    const key = `${s.symbol}:${s.volumeDelta}`;
+                    seenSpikesRef.current.add(key);
+                });
+                skipNextToastRef.current = false;
+            } else {
+                const newSpikesToNotify = newSpikes.filter(spike => {
+                    const key = `${spike.symbol}:${spike.volumeDelta}`;
+                    return !seenSpikesRef.current.has(key);
+                });
+
+                newSpikesToNotify.slice(0, 3).forEach(spike => {
+                    const key = `${spike.symbol}:${spike.volumeDelta}`;
+                    showDesktopNotification(spike);
+
+                    toast.custom(t => (
+                        <div className="bg-white dark:bg-gray-900 border dark:border-gray-700 shadow-lg rounded px-4 py-3 flex items-center justify-between w-[320px] animate-slide-in-left">
+                            <div className="text-sm text-gray-800 dark:text-gray-200">
+                                📊 <strong>{spike.symbol}</strong> spiked with <strong>{spike.volumeDelta.toLocaleString()}</strong> volume
+                            </div>
+                            <button
+                                onClick={() => toast.dismiss(t.id)}
+                                className="ml-3 text-gray-500 hover:text-red-500 text-sm"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    ), { duration: 5000, position: 'bottom-left' });
+
+                    seenSpikesRef.current.add(key);
+                });
+            }
+
+            setSpikes(newSpikes);
             setTotal(total);
             setLastUpdated(new Date());
         } catch (err) {
@@ -36,13 +76,40 @@ const EquityPage = () => {
         }
     };
 
+    // 🔔 Ask permission on mount
+    useEffect(() => {
+        if ("Notification" in window && Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+
+    }, []);
+
+    // 🔔 Desktop notification + sound
+    const showDesktopNotification = (spike) => {
+        const title = `📈 ${spike.symbol} spiked!`;
+        const body = `Volume: ${spike.volumeDelta.toLocaleString()}`;
+
+        if ("Notification" in window && Notification.permission === "granted") {
+            new Notification(title, { body });
+        }
+
+        // 🔊 Play sound
+        const audio = new Audio('/notification.mp3');
+        audio.play().catch((err) => console.warn("Sound play failed:", err));
+    };
+
     useEffect(() => {
         fetchEquitySpikes(true);
     }, [volumeThreshold, dateOption, page]);
 
     useEffect(() => {
         setPage(1);
-    }, [search, dateOption, volumeThreshold]);
+        skipNextToastRef.current = true; // skip toast on dropdown change
+    }, [volumeThreshold, dateOption]);
+
+    useEffect(() => {
+        skipNextToastRef.current = true; // skip toast on page change
+    }, [page]);
 
     useEffect(() => {
         const interval = setInterval(() => fetchEquitySpikes(false), 10000);
@@ -54,19 +121,29 @@ const EquityPage = () => {
     );
 
     return (
-        <section className="max-w-6xl mx-auto">
+        <section className="max-w-6xl mx-auto px-4">
+            <Toaster /> {/* Toast container */}
+
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
                 <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
                     📊 Equity Volume Spikes
                 </h1>
+                <button
+                    onClick={() => showDesktopNotification({
+                        symbol: 'TEST',
+                        volumeDelta: 123456
+                    })}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                >
+                    🔔 Test Notification
+                </button>
+
                 <div className="flex gap-3">
                     <select
                         value={volumeThreshold}
                         onChange={(e) => setVolumeThreshold(Number(e.target.value))}
                         className="p-2 rounded dark:bg-gray-800 border dark:border-gray-600"
                     >
-                        {/* <option value={10000}>10K</option>
-                        <option value={25000}>25K</option> */}
                         <option value={50000}>50K</option>
                         <option value={100000}>100K</option>
                         <option value={200000}>200K</option>
