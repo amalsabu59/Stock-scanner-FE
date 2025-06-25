@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import Table from './SharedTable';
+import toast, { Toaster } from 'react-hot-toast';
 
 const OptionsPage = () => {
     const [spikes, setSpikes] = useState([]);
-    const [loading, setLoading] = useState(true); // used only for first-time load or user actions
+    const [loading, setLoading] = useState(true);
     const [lastUpdated, setLastUpdated] = useState(null);
     const [search, setSearch] = useState('');
     const [volumeThreshold, setVolumeThreshold] = useState(10000);
     const [dateOption, setDateOption] = useState('today');
     const [page, setPage] = useState(1);
     const [total, setTotal] = useState(0);
+    const [previousSymbols, setPreviousSymbols] = useState([]);
     const limit = 20;
 
     const fetchOptionSpikes = async (showLoader = false) => {
@@ -26,8 +28,25 @@ const OptionsPage = () => {
 
         try {
             const res = await fetch(url);
-            const { spikes, total } = await res.json();
-            setSpikes(spikes);
+            const { spikes: newSpikes, total } = await res.json();
+
+            // Detect new spike symbols
+            const newSymbols = newSpikes
+                .filter(s => !previousSymbols.includes(s.symbol))
+                .map(s => s.symbol);
+
+            if (newSymbols.length > 0) {
+                newSymbols.forEach(symbol => {
+                    const spike = newSpikes.find(s => s.symbol === symbol);
+                    toast.success(`📈 ${symbol} spiked with ${spike.volumeDelta.toLocaleString()} volume`, {
+                        position: 'bottom-left',
+                        duration: 4000,
+                    });
+                });
+            }
+
+            setPreviousSymbols(newSpikes.map(s => s.symbol));
+            setSpikes(newSpikes);
             setTotal(total);
             setLastUpdated(new Date());
         } catch (err) {
@@ -38,14 +57,13 @@ const OptionsPage = () => {
     };
 
     useEffect(() => {
-        fetchOptionSpikes(true); // show loading only on first load or manual change
+        fetchOptionSpikes(true);
     }, [volumeThreshold, dateOption, page]);
 
     useEffect(() => {
         setPage(1);
     }, [volumeThreshold, dateOption, search]);
 
-    // Poll every 30s in background without loader flickering
     useEffect(() => {
         const interval = setInterval(() => fetchOptionSpikes(false), 10000);
         return () => clearInterval(interval);
@@ -56,7 +74,9 @@ const OptionsPage = () => {
     );
 
     return (
-        <section className="max-w-6xl mx-auto">
+        <section className="max-w-6xl mx-auto px-4">
+            <Toaster /> {/* Toast notification handler */}
+
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
                 <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
                     📈 Options Volume Spikes
