@@ -128,7 +128,7 @@ const EquityPage = () => {
                 <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
                     📊 Equity Volume Spikes
                 </h1>
-                <button
+                {/* <button
                     onClick={() => showDesktopNotification({
                         symbol: 'TEST',
                         volumeDelta: 123456
@@ -136,7 +136,7 @@ const EquityPage = () => {
                     className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
                 >
                     🔔 Test Notification
-                </button>
+                </button> */}
 
                 <div className="flex gap-3">
                     <select
