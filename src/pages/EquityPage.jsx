@@ -70,10 +70,10 @@ const EquityPage = () => {
         const newSpikes = latestSpikesData.spikes.filter(spike => {
             const key = `${spike.symbol}:${spike.volumeDelta}`;
             const spikeTime = new Date(spike.timestamp).getTime();
-            let isRecent = now - spikeTime <= 180_000; // within last 3 mins
-            isRecent = true
+            const isRecent = now - spikeTime <= 180_000; // within last 3 mins
 
-            return isRecent && !seenSpikesRef.current.has(key);
+
+            return isRecent && !seenSpikesRef.current.has(key)
         });
 
         newSpikes.slice(0, 3).forEach(spike => {
