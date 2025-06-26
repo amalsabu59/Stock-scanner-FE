@@ -1,8 +1,8 @@
 // src/api/spikes.js
 import axios from 'axios';
 
-// const BASE_URL = "https://stock-scanner-be-r8iz.onrender.com/api";
-const BASE_URL = "http://localhost:3000/api"
+const BASE_URL = "https://stock-scanner-be-r8iz.onrender.com/api";
+// const BASE_URL = "http://localhost:3000/api"
 
 export const fetchSymbols = async () => {
     const res = await axios.get(`${BASE_URL}/symbols`);
