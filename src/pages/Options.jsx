@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import Table from './SharedTable';
+import Table from '../components/SharedTable';
 import toast, { Toaster } from 'react-hot-toast';
 
 const OptionsPage = () => {

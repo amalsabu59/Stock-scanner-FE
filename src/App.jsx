@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, NavLink, Navigate } from 'react-router-dom';
 
-import OptionsPage from './Options';
-import EquityPage from './EquityPage';
+import OptionsPage from './pages/Options';
+import EquityPage from './pages/EquityPage';
 
 const App = () => {
   const [dark, setDark] = useState(true);
